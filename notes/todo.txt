@@ -1,0 +1,13 @@
+ - For entity-operate, check if the entity will also be on player force
+    * This is now necessary since we allow turrets (worms) to be damage dealers now and don't want them counted as player damage
+ - Check for combat robot operability that follower robot count can be at least 1
+ - Encode that a vehicle gives access to its guns
+ - More detailed frozen checks (can vehicles freeze?)
+ - Make sure to consider projectiles etc. as well this time
+ - Edge types!
+ - A node for "reasonable damage" (so excluding things like cargo pods hitting stuff lol)
+ - Check for artillery remote or default automatic firing? Oh wait, I think you can spawn the remote?..
+ - Need to be more careful especially with like explosions and stuff what can be done on platform etc.
+ - Support for fluid temperatures?
+ - Support for py modules? Other scripting/manual compat?
+ - Better balance nodes?

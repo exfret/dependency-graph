@@ -1,0 +1,12 @@
+{
+    "name": "dependency-graph",
+    "version": "0.0.1",
+    "title": "Dependency Graph Library",
+    "author": "exfret",
+    "factorio_version": "2.0",
+    "description": "Defines a dependency graph and lookup tables for use by other mods",
+    "dependencies": [
+        "lookup-lib",
+        "random-lib"
+    ]
+}

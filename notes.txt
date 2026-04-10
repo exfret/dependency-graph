@@ -1,0 +1,6 @@
+Leave splitters the same size, makes UX sense anyways
+ - Rename to lane splitters?
+Circuit connections on belts can go fuck themselves (sorry sushi people)
+
+TODO:
+ - Vehicle classes
