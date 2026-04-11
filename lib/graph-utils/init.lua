@@ -5,6 +5,7 @@ local gutils = {}
 local filenames = {
     "basic-ops",
     "subdivision",
+    "trim",
 }
 for _, filename in pairs(filenames) do
     local sub_utils = require("lib.graph-utils." .. filename)

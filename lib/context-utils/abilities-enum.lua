@@ -1,0 +1,6 @@
+return {
+    abilities = {
+        "isolated",
+        "automated",
+    }
+}

@@ -1,3 +1,5 @@
+Currently working on state.lua in lib.logic so that I can actually test the graph
+
  - For entity-operate, check if the entity will also be on player force
     * This is now necessary since we allow turrets (worms) to be damage dealers now and don't want them counted as player damage
  - Check for combat robot operability that follower robot count can be at least 1
