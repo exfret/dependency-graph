@@ -43,19 +43,20 @@ state.add_node = function(node_type, op, node_name, extra)
     if extra.prot == nil and curr_prot ~= nil then
         extra.prot = key(curr_prot)
     end
+    extra.canonical = extra.canonical or curr_class
 
     curr = gutils.add_node(graph, node_type, node_name, op, extra)
 end
 
-state.add_edge = function(edge_type, start_type, start_name, extra, stop_type, stop_name)
-    assert(edge_type ~= nil and start_type ~= nil)
+state.add_edge = function(start_type, start_name, extra, stop_type, stop_name)
+    assert(start_type ~= nil)
     start_name = start_name or curr_prot.name
     stop_type = stop_type or curr.type
     stop_name = stop_name or curr.name
 
     extra = extra or {}
 
-    gutils.add_edge(graph, edge_type, key(start_type, start_name), key(stop_type, stop_name), extra, {build_in_progress = true})
+    gutils.add_edge(graph, key(start_type, start_name), key(stop_type, stop_name), extra, {build_in_progress = true})
 end
 
 return state

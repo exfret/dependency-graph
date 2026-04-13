@@ -26,9 +26,9 @@ concrete.build = function()
         
         for _, source in pairs(lu.ammo_category_sources) do
             if source.type == "turret" then
-                add_edge("turret-has-ammo-category", "entity-operate", source.name)
+                add_edge("entity-operate", source.name)
             elseif source.type == "gun" then
-                add_edge("gun-has-ammo-category", "item-gun", source.name, {
+                add_edge("item-gun", source.name, {
                     context = { ["automated"] = false },
                 })
             end
@@ -39,7 +39,7 @@ concrete.build = function()
 -- Asteroid chunk
 ----------------------------------------------------------------------------------------------------
 
-    --[[set_class("asteroid-chunk")
+    --[=[set_class("asteroid-chunk")
 
     for _, chunk in pairs(prots("asteroid-chunk")) do
         set_prot(chunk)
@@ -50,17 +50,16 @@ concrete.build = function()
         -- Can we encounter this asteroid chunk?
 
         -- Edges from locations where this chunk spawns naturally
-        if lu.asteroid_to_place[key("asteroid-chunk", chunk.name)] ~= nil then
-            for _, place in pairs(lu.asteroid_to_place[key("asteroid-chunk", chunk.name)]) do
-                add_edge("space-place-spawns-chunk", place.type, place.name)
-            end
+        for _, place in pairs(lu.asteroid_to_places[key("asteroid-chunk", chunk.name)]) do
+            add_edge("space-place-spawns-chunk", place.type, place.name)
         end
         -- Edges from entities that spawn this chunk when dying
-        for _, source in pairs(tablize(lu.dying_spawns_reverse[key("asteroid-chunk", chunk.name)])) do
+        -- TODO: Implement after I figure out triggers situation better
+        --[[for _, source in pairs(tablize(lu.dying_spawns_reverse[key("asteroid-chunk", chunk.name)])) do
             if source.type == "entity" then
-                add_edge("dying-spawns-create-chunk", "entity-kill", source.name)
+                add_edge("entity-kill", source.name)
             end
-        end
+        end]]
 
         ----------------------------------------
         add_node("asteroid-chunk-mine", "AND")
@@ -71,8 +70,8 @@ concrete.build = function()
         add_edge("chunk-to-mine", "asteroid-chunk", chunk.name, {
             context = { ["automated"] = true },
         })
-        add_edge("asteroid-collector-for-mining", "asteroid-collector", "")
-    end]]
+        add_edge("asteroid-collector", "")
+    end]=]
 end
 
 return concrete

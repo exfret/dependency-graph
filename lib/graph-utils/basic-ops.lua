@@ -60,14 +60,12 @@ end
 -- Default edge should have values set for all standard node fields
 local default_edge = {
     object_type = "edge",
-    type = "", -- Must be provided
     start = "", -- Must be provided
     stop = "", -- Must be provided
 }
 -- start and stop can be given as the actual nodes, in which case they're converted to keys
 -- flags is extra info about the creation, mainly here whether to not update degree info yet (because the nodes are maybe not created)
-basic_ops.add_edge = function(graph, edge_type, start, stop, extra, flags)
-    assert(type(edge_type) == "string")
+basic_ops.add_edge = function(graph, start, stop, extra, flags)
     if type(start) == "table" then
         start = key(start)
     end
@@ -77,7 +75,6 @@ basic_ops.add_edge = function(graph, edge_type, start, stop, extra, flags)
     flags = flags or {}
 
     local edge = table.deepcopy(edge)
-    edge.type = edge_type
     edge.start = start
     edge.stop = stop
     if extra ~= nil then

@@ -1,4 +1,4 @@
-Currently working on state.lua in lib.logic so that I can actually test the graph
+Currently working on trigger lookups
 
  - For entity-operate, check if the entity will also be on player force
     * This is now necessary since we allow turrets (worms) to be damage dealers now and don't want them counted as player damage
@@ -13,3 +13,4 @@ Currently working on state.lua in lib.logic so that I can actually test the grap
  - Support for fluid temperatures?
  - Support for py modules? Other scripting/manual compat?
  - Better balance nodes?
+ - TODO nodes/edges
