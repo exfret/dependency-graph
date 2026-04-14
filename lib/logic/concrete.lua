@@ -5,7 +5,9 @@ local set_prot = state.set_prot
 local add_node = state.add_node
 local add_edge = state.add_edge
 local key = DataRawLib.key.key
+local base_prots = DataRawLib.traversal.base_prots
 local prots = DataRawLib.traversal.prots
+local tablize = DataRawLib.traversal.tablize
 
 local concrete = {}
 
@@ -39,7 +41,7 @@ concrete.build = function()
 -- Asteroid chunk
 ----------------------------------------------------------------------------------------------------
 
-    --[=[set_class("asteroid-chunk")
+    set_class("asteroid-chunk")
 
     for _, chunk in pairs(prots("asteroid-chunk")) do
         set_prot(chunk)
@@ -51,7 +53,7 @@ concrete.build = function()
 
         -- Edges from locations where this chunk spawns naturally
         for _, place in pairs(lu.asteroid_to_places[key("asteroid-chunk", chunk.name)]) do
-            add_edge("space-place-spawns-chunk", place.type, place.name)
+            add_edge(place.type, place.name)
         end
         -- Edges from entities that spawn this chunk when dying
         -- TODO: Implement after I figure out triggers situation better
@@ -67,11 +69,47 @@ concrete.build = function()
         -- Can we mine this asteroid chunk?
 
         -- Asteroid chunks can always be mined automatically
-        add_edge("chunk-to-mine", "asteroid-chunk", chunk.name, {
+        add_edge("asteroid-chunk", chunk.name, {
             context = { ["automated"] = true },
         })
         add_edge("asteroid-collector", "")
-    end]=]
+    end
+
+    ----------------------------------------------------------------------
+    -- Damage Type
+    ----------------------------------------------------------------------
+
+    -- TODO
+
+    ----------------------------------------------------------------------
+    -- Entity
+    ----------------------------------------------------------------------
+
+    --[[set_class("entity")
+
+    for _, entity in pairs(base_prots("entity")) do
+        set_prot(entity)
+
+        ----------------------------------------
+        add_node("entity", "OR")
+        ----------------------------------------
+        -- Can we encounter this entity?
+
+        -- TODO: Should having to build an entity turn off automated?
+        -- TODO: Maybe think more about automated along with the other ones more. 
+        -- TODO: Only add entity-build if the entity is buildable (or when optimization is turned off in settings)
+        add_edge("entity-build")
+        for room_key, _ in pairs(tablize(lu.rooms_spawning_entity[entity.name])) do
+            -- Technically, we should check that there are non-colliding tiles too, but it would be very silly to have an entity in autoplace that can't be placed somewhere
+            add_edge("room-autoplace", room_key, {
+                entity = entity.name,
+                abilities = { ["automated"] = true },
+            }) -- Being directly from a room leads to isolated
+        end
+        for other_entity_name, _ in pairs(tablize(lu.entities_with_corpse[entity.name])) do
+            add_edge("entity-kill", other_entity_name)
+        end
+    end]]
 end
 
 return concrete

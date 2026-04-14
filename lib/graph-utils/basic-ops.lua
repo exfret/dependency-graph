@@ -74,18 +74,18 @@ basic_ops.add_edge = function(graph, start, stop, extra, flags)
     end
     flags = flags or {}
 
-    local edge = table.deepcopy(edge)
+    local edge = table.deepcopy(default_edge)
     edge.start = start
     edge.stop = stop
     if extra ~= nil then
         for k, v in pairs(extra) do
-            assert(node[k] == nil)
+            assert(edge[k] == nil)
             edge[k] = v
         end
     end
 
     graph.edges[ekey(edge)] = edge
-    if not flag.build_in_progress then
+    if not flags.build_in_progress then
         basic_ops.update_degree_info(graph, edge.start, "out", 1)
         basic_ops.update_degree_info(graph, edge.stop, "in", 1)
     end
