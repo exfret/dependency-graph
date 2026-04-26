@@ -4,6 +4,9 @@ local set_class = state.set_class
 local set_prot = state.set_prot
 local add_node = state.add_node
 local add_edge = state.add_edge
+
+local collision_mask_util = require("__core__.lualib.collision-mask-util")
+local categories = DataRawLib.categories
 local key = DataRawLib.key.key
 local base_prots = DataRawLib.traversal.base_prots
 local prots = DataRawLib.traversal.prots
@@ -52,7 +55,8 @@ concrete.build = function()
         -- Can we encounter this asteroid chunk?
 
         -- Edges from locations where this chunk spawns naturally
-        for _, place in pairs(tablize(lu.asteroid_to_places[key("asteroid-chunk", chunk.name)])) do
+        for place_name, _ in pairs(tablize(lu.asteroid_to_places[key("asteroid-chunk", chunk.name)])) do
+            local place = lu.space_places[place_name]
             add_edge(place.type, place.name)
         end
         -- Edges from triggers that spawn this entity
@@ -99,7 +103,12 @@ concrete.build = function()
                 desc = struct.edge_desc,
             })
         end
-        -- TODO: Impact damage
+        -- Edges for other sources
+        for _, source_info in pairs(tablize(lu.damage_type_to_sources[damage.name])) do
+            add_edge(source_info.start_type, source_info.start_name, {
+                desc = source_info.edge_desc,
+            })
+        end
     end
 
     ----------------------------------------------------------------------
@@ -119,18 +128,20 @@ concrete.build = function()
         -- TODO: Should having to build an entity turn off automated?
         -- TODO: Maybe think more about automated along with the other ones more. 
         -- TODO: Only add entity-build if the entity is buildable (or when optimization is turned off in settings)
-        --[[local buildables = lu.buildables[key(entity)]
-        if buildables ~= nil then
-            add_edge("entity-build")
-        end]]
-        -- TODO: Autoplace
-        --[[for room_key, _ in pairs(tablize(lu.autoplaceable_to_rooms[entity.name])) do
-            -- Technically, we should check that there are non-colliding tiles too, but it would be very silly to have an entity in autoplace that can't be placed somewhere
-            add_edge("room", room_key, {
+        local placeables = lu.placeables[entity.name]
+        if placeables ~= nil then
+            add_edge("entity-place")
+        end
+        local plantables = lu.plantables[entity.name]
+        if plantables ~= nil then
+            add_edge("entity-plant")
+        end
+        for planet_name, _ in pairs(tablize(lu.autoplaceable_to_planet[key("entity", entity.name)])) do
+            add_edge("room", key("room", planet_name), {
                 entity = entity.name,
-                abilities = { ["isolated"] = true },
+                context = { ["isolated"] = true },
             })
-        end]]
+        end
         for entity_with_corpse_name, _ in pairs(tablize(lu.entities_with_corpse[entity.name])) do
             add_edge("entity-kill", entity_with_corpse_name)
         end
@@ -139,7 +150,8 @@ concrete.build = function()
         end
         -- TODO: Trigger creations, primarily ammo spawns, dying spawns, and capsules
         -- Asteroid spawning
-        for _, place in pairs(tablize(lu.asteroid_to_places[key("entity", entity.name)])) do
+        for place_name, _ in pairs(tablize(lu.asteroid_to_places[key("entity", entity.name)])) do
+            local place = lu.space_places[place_name]
             add_edge(place.type, place.name)
         end
         -- Starting character
@@ -147,16 +159,17 @@ concrete.build = function()
             add_edge("starting-character", "")
         end
 
-        --[[if buildables ~= nil then
+        if placeables ~= nil then
             ----------------------------------------
-            add_node("entity-build", "AND")
+            add_node("entity-place", "AND")
             ----------------------------------------
-            -- Can we build this entity using an item?
-            -- Entities that can be planted are counted as being built, though later during randomization we might have to condition on it being a planted or built entity
+            -- Can we place this entity using an item?
+            -- Does not include planting entities by agricultural towers
 
-            add_edge("entity-build-item")
+            add_edge("entity-place-item")
             add_edge("entity-build-tile")
-            local build_room_restrictions = lu.build_room_restrictions[entity.name]
+            -- TODO
+            --local build_room_restrictions = lu.build_room_restrictions[entity.name]
             if build_room_restrictions ~= nil then
                 add_edge("entity-build-surface-condition")
             end
@@ -165,11 +178,60 @@ concrete.build = function()
             end
 
             ----------------------------------------
-            add_node("entity-build-item", "OR")
+            add_node("entity-place-item", "OR")
             ----------------------------------------
-            -- Can we get an item needed to build this entity?
-            -- TODO
-        end]]
+            -- Can we get an item needed to place this entity?
+            
+            for item_name, _ in pairs(placeables) do
+                add_edge("item", item_name)
+            end
+        end
+        if plantables ~= nil then
+            ----------------------------------------
+            add_node("entity-plant", "AND")
+            ----------------------------------------
+            -- Can we plant this entity using an item and an agricultural tower?
+            -- Entities that can be planted are counted as being built, though later during randomization we might have to condition on it being a planted or built entity
+
+            add_edge("entity-plant-item")
+            add_edge("entity-build-tile")
+            --local build_room_restrictions = lu.build_room_restrictions[entity.name]
+            if build_room_restrictions ~= nil then
+                add_edge("entity-build-surface-condition")
+            end
+            -- No need to check for rolling stock because only plants can be planted
+
+            ----------------------------------------
+            add_node("entity-plant-item", "OR")
+            ----------------------------------------
+            -- Can we get an item needed to plant this entity?
+            
+            for item_name, _ in pairs(plantables) do
+                add_edge("item", item_name)
+            end
+        end
+        if plantables ~= nil or placeables ~= nil then
+            ----------------------------------------
+            add_node("entity-build-tile", "OR")
+            ----------------------------------------
+            -- Can we access a tile on which the entity can be built? (i.e., no collision)
+
+            -- For optimization, we precompute possible tile collision masks and make a tile-collision node for each group, then simply have this depend on the right groups
+            -- If there's a restriction, this gets more complicated, so just depend on the individual tiles (note that this overrides collision masks)
+            if not (entity.autoplace ~= nil and entity.autoplace.tile_restriction ~= nil) then
+                -- TODO
+                --add_edge("entity-collision-group", lu.entity_to_collision_group[entity.name])
+            else
+                -- This is luckily an OR over tiles and transitions
+                for _, restriction in pairs(entity.autoplace.tile_restriction) do
+                    -- Ignore transition restrictions (those could play a role but only in mods that force buildings to be on specific transitions)
+                    -- Still check collision in case a mod does something dumb since that's easy
+                    if type(restriction) == "string" and not collision_mask_util.masks_collide(data.raw.tile[restriction].collision_mask, entity.collision_mask or collision_mask_util.get_default_mask(entity.type)) then
+                        add_edge("tile", restriction)
+                    end
+                end
+            end
+        end
     end
 end
 

@@ -6,9 +6,3 @@ DepGraph.gutils = require("lib.graph-utils.init")
 
 -- build returns a function
 DepGraph.build = require("lib.logic.build")
-
-
-
-
-
-DepGraph.build()

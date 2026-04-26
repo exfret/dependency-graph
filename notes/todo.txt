@@ -16,3 +16,6 @@ Currently working on trigger lookups
  - Better balance nodes?
  - TODO nodes/edges
  - Landmines require planet to work
+ - Determine how/what damage sources to count as automated
+ - An "item-plant" (AND) node for whether an item can be planted (AND over the item and an agricultural tower group node that accepts this item)
+ - An "item-agricultural-tower" (OR) node for agricultural towers accepting this item (let's just not do the grouping approach actually, doesn't save much)
