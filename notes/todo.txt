@@ -14,8 +14,11 @@ Currently working on trigger lookups
  - Support for fluid temperatures?
  - Support for py modules? Other scripting/manual compat?
  - Better balance nodes?
- - TODO nodes/edges
+ - Work on the TODO nodes/edges
  - Landmines require planet to work
  - Determine how/what damage sources to count as automated
  - An "item-plant" (AND) node for whether an item can be planted (AND over the item and an agricultural tower group node that accepts this item)
  - An "item-agricultural-tower" (OR) node for agricultural towers accepting this item (let's just not do the grouping approach actually, doesn't save much)
+ - Test buildability rules for autoplace (Should I still do this)
+ - Figure out how to do fluid temperatures
+ - Add required modules for recipes too (needed for breeding complex, which has modules required changed based off specific recipe)
