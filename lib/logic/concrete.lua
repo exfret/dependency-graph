@@ -159,13 +159,13 @@ concrete.build = function()
                 desc = struct.edge_desc,
             })
         end
-
         -- Asteroid spawning
         for place_name, _ in pairs(tablize(lu.asteroid_to_places[key("entity", entity.name)])) do
             local place = lu.space_places[place_name]
             add_edge(place.type, place.name)
         end
         -- Starting character
+        -- CRITICAL TODO: encode starting character somewhere rather than it being hardcoded
         if entity.type == "character" and entity.name == "character" then
             add_edge("starting-character", "")
         end
@@ -359,6 +359,103 @@ concrete.build = function()
                 end
             end
         end
+
+        -- TODO: Restrict to only relevant entities for efficiency
+        if not categories.without_health[entity.type] then
+            ----------------------------------------
+            add_node("entity-kill", "AND")
+            ----------------------------------------
+            -- Can we kill this entity?
+            -- Created for anything that could have health.
+
+            -- We just check for immunities here, i.e.- 100% or more resistance
+            -- Later, in balance.lua we can worry about "virtually immune" entities/health amounts etc.
+            -- We also might want edges from damage types for representing resistances to randomize later, but when I do that I can decide what specific entities to touch
+            -- Building every entity-damage type combination seems like a lot to me now, which is why I'm doing it this way
+            add_edge("resistance-group", lu.entity_to_resistance_group[entity.name])
+            add_edge("entity")
+        end
+
+        if entity.minable ~= nil then
+            ----------------------------------------
+            add_node("entity-mine", "AND")
+            ----------------------------------------
+            -- Can we mine this entity?
+
+            if entity.type == "resource" then
+                add_edge("entity", entity.name, {
+                    abilities = { [2] = true },
+                })
+                -- For resources requiring fluid, we need the specific fluid + tech unlock
+                -- Note that if we wanted to be especially careful, we'd check mining drill fluid box filters too, but we'll leave that for another time if at all
+                if entity.minable.required_fluid ~= nil then
+                    add_edge("fluid", entity.minable.required_fluid)
+                    add_edge("mining-with-fluid-unlock", "", {
+                        abilities = { [2] = true }, -- Automatability of the unlock doesn't impact the actual mining automatability
+                    })
+                end
+
+                -- Resource category checks drill capability (right category and fluid boxes)
+                add_edge("resource-category", cat_sigs.mcat_name(entity))
+            else
+                add_edge("entity", entity.name, {
+                    abilities = { [2] = false }, -- Non-resource entities cannot be mined automatically
+                })
+            end
+        end
+
+        if entity.type == "unit-spawner" then
+            ----------------------------------------
+            add_node("entity-capture-spawner", "AND")
+            ----------------------------------------
+            -- Can we capture this unit spawner?
+
+            add_edge("entity")
+            add_edge("capture-robot", "")
+        end
+
+        if entity.type == "character" then
+            ----------------------------------------
+            add_node("entity-character", "AND")
+            ----------------------------------------
+            -- Can we inhabit this character entity?
+            -- Used to determine certain character actions, like ability to throw capsules
+            -- Note that we can only "operate" a character on planets
+
+            add_edge("entity")
+            add_edge("planet", "")
+        end
+
+        if entity.type == "rocket-silo" then
+            ----------------------------------------
+            add_node("entity-rocket-silo", "AND")
+            ----------------------------------------
+            -- Can we use this rocket silo for launching?
+            -- Combines entity-operate with the silo's fixed recipe requirement.
+
+            add_edge("entity-operate")
+            if entity.fixed_recipe ~= nil then
+                add_edge("recipe", entity.fixed_recipe)
+            else
+                -- There should always be a fixed recipe; I'm not sure what happens if there isn't
+                -- CRITICAL TODO: Consider doing warnings rather than hard errors
+                error("No fixed recipe for silo: " .. entity.name)
+            end
+        end
+    end
+
+    ----------------------------------------------------------------------
+    -- Equipment
+    ----------------------------------------------------------------------
+
+    -- Note: Size constraints not checked (equipment might be too large for grid).
+
+    set_class("equipment")
+
+    for _, equipment in pairs(base_prots("equipment")) do
+        set_prot(equipment)
+
+        -- TODO
     end
 end
 

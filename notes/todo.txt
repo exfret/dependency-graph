@@ -22,3 +22,5 @@ Currently working on trigger lookups
  - Test buildability rules for autoplace (Should I still do this)
  - Figure out how to do fluid temperatures
  - Add required modules for recipes too (needed for breeding complex, which has modules required changed based off specific recipe)
+ - Trigger mining with fluid unlock automatically with randomizer
+ - Empty mcat
